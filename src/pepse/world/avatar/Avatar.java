@@ -1,6 +1,7 @@
 package pepse.world.avatar;
 
 import danogl.GameObject;
+import danogl.collisions.Collision;
 import danogl.gui.ImageReader;
 import danogl.gui.UserInputListener;
 import danogl.gui.rendering.OvalRenderable;
@@ -22,6 +23,9 @@ public class Avatar extends GameObject {
     private final AvatarAnimation avatarAnimation;
     private int energy;
     private AvatarState curState;
+
+    public static final String GROUND_TAG = "ground";
+    public static final String TRUNK_TAG = "trunk";
 
 
     // ~~~~~~~~~~~~~~
@@ -82,11 +86,15 @@ public class Avatar extends GameObject {
      * @param newState the new state to transition to.
      */
     public void changeState(AvatarState newState) {
-        if (curState != null) {
+        if(curState != null) {
             curState.exit(this);
         }
         curState = newState;
         curState.enter(this);
+    }
+
+    private boolean isSurfaceObj(GameObject other) {
+        return other.getTag().equals(GROUND_TAG) || other.getTag().equals(TRUNK_TAG);
     }
 
     // ~~~~~~~~~~~~~
@@ -97,8 +105,21 @@ public class Avatar extends GameObject {
         super.update(deltaTime);
 
         AvatarState nextState = curState.tick(this);
-        if (nextState != null && nextState != curState) {
+        if(nextState != null && nextState != curState) {
             changeState(nextState);
         }
+    }
+
+    @Override
+    public void onCollisionEnter(GameObject other, Collision collision) {
+        super.onCollisionEnter(other, collision);
+
+        if(!isSurfaceObj(other)) { return; }
+
+        // landing vertically on top of ground/trunk while falling down
+        if(getVelocity().y() > 0) { transform().setVelocityY(0); }
+
+        // Hitting the side of a ground wall/trunk horizontally
+        if(collision.getNormal().x() != 0) { transform().setVelocityX(0); }
     }
 }

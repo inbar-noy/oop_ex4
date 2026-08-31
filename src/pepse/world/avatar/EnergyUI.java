@@ -50,12 +50,12 @@ public class EnergyUI extends GameObject {
         timeSinceLastRefresh += deltaTime;
 
         // update if enough time has passed and reset clock
-        if (timeSinceLastRefresh >= REFRESH_INTERVAL) {
+        if(timeSinceLastRefresh >= REFRESH_INTERVAL) {
             // reset clock
             timeSinceLastRefresh %= REFRESH_INTERVAL;
             // update step
             int curEnergy = energySupplier.get();
-            if (curEnergy != latestEnergy) {
+            if(curEnergy != latestEnergy) {
                 latestEnergy = curEnergy;
                 textRenderable.setString(String.format(ENERGY_STRING_FORMAT, curEnergy));
             }
