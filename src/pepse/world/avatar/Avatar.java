@@ -6,6 +6,7 @@ import danogl.gui.ImageReader;
 import danogl.gui.UserInputListener;
 import danogl.gui.rendering.OvalRenderable;
 import danogl.util.Vector2;
+import pepse.PepseGameManager;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -24,8 +25,8 @@ public class Avatar extends GameObject {
     private int energy;
     private AvatarState curState;
 
-    public static final String GROUND_TAG = "ground";
-    public static final String TRUNK_TAG = "trunk";
+    private static final String GROUND_TAG = PepseGameManager.GROUND_TAG;
+    private static final String TRUNK_TAG = PepseGameManager.TRUNK_TAG;
 
 
     // ~~~~~~~~~~~~~~
@@ -117,7 +118,7 @@ public class Avatar extends GameObject {
         if(!isSurfaceObj(other)) { return; }
 
         // landing vertically on top of ground/trunk while falling down
-        if(getVelocity().y() > 0) { transform().setVelocityY(0); }
+        if(collision.getNormal().y() > 0) { transform().setVelocityY(0); }
 
         // Hitting the side of a ground wall/trunk horizontally
         if(collision.getNormal().x() != 0) { transform().setVelocityX(0); }

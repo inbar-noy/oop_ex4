@@ -6,14 +6,17 @@ import danogl.gui.*;
 import danogl.gui.rendering.*;
 import danogl.util.Vector2;
 
-// Import implemented avatar classes
+// Import implemented avatar and tree classes
+import pepse.PepseGameManager;
 import pepse.world.avatar.Avatar;
 import pepse.world.avatar.EnergyUI;
+import pepse.world.trees.Flora;
 
 import java.awt.*;
+import java.util.List;
 
 /**
- * Test harness for testing the new Avatar and EnergyUI.
+ * Test harness for testing the new Avatar, EnergyUI, and Flora.
  */
 public class Platformer extends GameManager {
     private static final Color BACKGROUND_COLOR = Color.decode("#80C6E5");
@@ -33,21 +36,35 @@ public class Platformer extends GameManager {
         background.setCoordinateSpace(CoordinateSpace.CAMERA_COORDINATES);
         gameObjects().addGameObject(background, Layer.BACKGROUND);
 
-        // 2. Platforms
+        // 2. Ground Platform (at Y = 1000)
         placePlatform(Vector2.of(-1024, 1000), Vector2.ONES.mult(2048));
         placePlatform(Vector2.of(-512, 700), Vector2.of(1024, 50));
         placePlatform(Vector2.of(-256, 400), Vector2.of(512, 50));
         placePlatform(Vector2.of(-128, 100), Vector2.of(256, 50));
 
-        // 3. Create your new Avatar (passing imageReader for the sprites)
+        // 3. Test Trees via Flora (using dummy ground height Y = 1000f)
+        Flora flora = new Flora(x -> 1000f);
+        List<GameObject> treeParts = flora.createInRange(-1000, 1000);
+
+        for (GameObject part : treeParts) {
+            if (part.getTag().equals(PepseGameManager.TRUNK_TAG)) {
+                // Trunks belong in solid static layer
+                gameObjects().addGameObject(part, Layer.DEFAULT);
+            } else {
+                // Leaves belong in a visual, non-colliding layer
+                gameObjects().addGameObject(part, Layer.DEFAULT);
+            }
+        }
+
+        // 4. Create your Avatar
         var avatar = new Avatar(Vector2.of(0, 900), inputListener, imageReader);
         gameObjects().addGameObject(avatar);
 
-        // 4. Create EnergyUI using method reference callback
+        // 5. Create EnergyUI
         var energyUI = new EnergyUI(avatar::getEnergy);
         gameObjects().addGameObject(energyUI, Layer.UI);
 
-        // 5. Camera tracking
+        // 6. Camera tracking
         setCamera(new Camera(avatar, Vector2.ZERO,
                 windowController.getWindowDimensions(), windowController.getWindowDimensions()));
     }
