@@ -4,12 +4,10 @@ import danogl.GameObject;
 import danogl.collisions.Collision;
 import danogl.gui.ImageReader;
 import danogl.gui.UserInputListener;
-import danogl.gui.rendering.OvalRenderable;
 import danogl.util.Vector2;
 import pepse.PepseGameManager;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 public class Avatar extends GameObject {
     protected static final float VELOCITY_X = 400;
