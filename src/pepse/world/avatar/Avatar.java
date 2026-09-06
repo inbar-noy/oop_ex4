@@ -23,10 +23,6 @@ public class Avatar extends GameObject {
     private int energy;
     private AvatarState curState;
 
-    private static final String GROUND_TAG = PepseGameManager.GROUND_TAG;
-    private static final String TRUNK_TAG = PepseGameManager.TRUNK_TAG;
-
-
     // ~~~~~~~~~~~~~~
     //   CONSTRUCTOR
     // ~~~~~~~~~~~~~~
@@ -46,6 +42,7 @@ public class Avatar extends GameObject {
         this.inputListener = inputListener;
         this.avatarAnimation = new AvatarAnimation(imageReader);
         this.energy = ENERGY_MAX;
+        this.setTag(PepseGameManager.AVATAR_TAG);
 
         // Initialize with the default (idle) state
         changeState(new IdleState());
@@ -93,8 +90,10 @@ public class Avatar extends GameObject {
     }
 
     private boolean isSurfaceObj(GameObject other) {
-        return other.getTag().equals(GROUND_TAG) || other.getTag().equals(TRUNK_TAG);
+        return other.getTag().equals(PepseGameManager.GROUND_TAG) ||
+                other.getTag().equals(PepseGameManager.TRUNK_TAG);
     }
+
 
     // ~~~~~~~~~~~~~
     //   OVERRIDES
@@ -113,12 +112,10 @@ public class Avatar extends GameObject {
     public void onCollisionEnter(GameObject other, Collision collision) {
         super.onCollisionEnter(other, collision);
 
-        if(!isSurfaceObj(other)) { return; }
+        if(getVelocity().y() > 0 && isSurfaceObj(other)) {
+            this.transform().setVelocityY(0);
+        }
 
-        // landing vertically on top of ground/trunk while falling down
-        if(collision.getNormal().y() > 0) { transform().setVelocityY(0); }
-
-        // Hitting the side of a ground wall/trunk horizontally
-        if(collision.getNormal().x() != 0) { transform().setVelocityX(0); }
     }
+
 }

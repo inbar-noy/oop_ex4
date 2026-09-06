@@ -5,22 +5,25 @@ import danogl.gui.rendering.RectangleRenderable;
 import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
 import pepse.PepseGameManager;
+import pepse.world.Block;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.function.Consumer;
 
 /**
  * Combines a trunk and treetop into a static tree.
  */
 public class StaticTree {
 
-    private static final int MEASURE_UNIT = 30;
+    private static final int MEASURE_UNIT = Block.SIZE;
     private static final int TREE_EDGE = 8 * MEASURE_UNIT;
     private static final int TREE_RADIUS = TREE_EDGE / 2;
     private final ArrayList<GameObject> treeObjects = new ArrayList<>();
 
-    public StaticTree(Vector2 topTrunkLeftCorner, int trunkHeight, Random rand) {
+    public StaticTree(Vector2 topTrunkLeftCorner, int trunkHeight, Random rand,
+                      Consumer<Integer> energyCallback) {
 
         // TRUNK CONSTRUCTION
         Color trunkColor = PepseGameManager.BROWN;
@@ -32,7 +35,7 @@ public class StaticTree {
         int treetopX = (int) (topTrunkLeftCorner.x() - TREE_RADIUS + (MEASURE_UNIT / 2f));
         int treetopY = (int) (topTrunkLeftCorner.y() - (TREE_RADIUS * 1.5)); // so short trees tops won't overlap completely with the trunk
         Vector2 topTreetop = new Vector2(treetopX, treetopY);
-        Treetop treetop = new Treetop(topTreetop, rand);
+        Treetop treetop = new Treetop(topTreetop, rand, energyCallback);
         ArrayList<GameObject> leaves = treetop.getLeaves();
 
         // ADDITION TO TREE OBJECTS

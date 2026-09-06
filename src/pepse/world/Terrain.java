@@ -3,6 +3,7 @@ package pepse.world;
 import danogl.GameObject;
 import danogl.gui.rendering.RectangleRenderable;
 import danogl.util.Vector2;
+import pepse.PepseGameManager;
 import pepse.utils.ColorSupplier;
 import pepse.utils.NoiseGenerator;
 
@@ -19,7 +20,7 @@ public class Terrain {
     private static final int TERRAIN_DEPTH = 30;
 
     public Terrain(Vector2 windowDimensions, int seed) {
-        groundHeightAtX0 = windowDimensions.y() * 2;
+        groundHeightAtX0 = windowDimensions.y() * (2f / 3f);
         noiseGenerator = new NoiseGenerator(seed, (int)groundHeightAtX0);
     }
 
@@ -29,7 +30,7 @@ public class Terrain {
                 new RectangleRenderable(ColorSupplier.approximateColor(
                         BASE_GROUND_COLOR))
         );
-//        block.setTag(GROUND_TAG);
+        block.setTag(PepseGameManager.GROUND_TAG);
         return block;
     }
 

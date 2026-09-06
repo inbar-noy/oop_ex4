@@ -2,22 +2,27 @@ package pepse.world.trees;
 
 import danogl.GameObject;
 import danogl.util.Vector2;
+import pepse.world.Block;
 
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Flora {
-    private static final int MEASURE_UNIT = 30;
+    private static final int MEASURE_UNIT = Block.SIZE;
     private static final float TREE_PROBABILITY = 0.1f;
     private static final int MIN_TRUNK_HEIGHT = 4;
     private static final int MAX_TRUNK_HEIGHT_ADDITION = 6;
     private static final int SEED = 21;
-    private final Function<Float, Float> groundHeightAt;
 
-    public Flora(Function<Float, Float> groundHeightAt) {
+    private final Function<Float, Float> groundHeightAt;
+    private final Consumer<Integer> energyCallback;
+
+    public Flora(Function<Float, Float> groundHeightAt, Consumer<Integer> energyCallback) {
         this.groundHeightAt = groundHeightAt;
+        this.energyCallback = energyCallback;
     }
 
     public ArrayList<GameObject> createInRange(int minX, int maxX) {
@@ -39,7 +44,9 @@ public class Flora {
                 float topLeftTrunkY = terrainY - (trunkHeightInBlocks * MEASURE_UNIT);
                 Vector2 topLeftTrunk = new Vector2(x, topLeftTrunkY);
 
-                StaticTree tree = new StaticTree(topLeftTrunk, trunkHeightInBlocks, rand);
+                StaticTree tree = new StaticTree(
+                        topLeftTrunk, trunkHeightInBlocks, rand, energyCallback
+                );
                 woodland.addAll(tree.getTree());
             }
         }
