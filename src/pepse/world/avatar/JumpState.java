@@ -21,6 +21,7 @@ public class JumpState implements AvatarState {
     @Override
     public void enter(Avatar avatar) {
         avatar.renderer().setRenderable(avatar.getAvatarAnimation().getJumpAnimation());
+        avatar.clearSurface();
 
         if(jumpedFromGround) {
             // ome-time payment

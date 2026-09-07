@@ -30,7 +30,8 @@ public class PepseGameManager extends GameManager {
 
     public static final String SKY_TAG = "sky";
     public static final String AVATAR_TAG = "avatar";
-    public static final String GROUND_TAG = "ground";
+    public static final String GROUND_SURFACE_TAG = "surface_ground";
+    public static final String GROUND_INNER_TAG = "inner_ground";
     public static final String TRUNK_TAG = "trunk";
     public static final String LEAF_TAG = "leaf";
     public static final String FRUIT_TAG = "fruit";
@@ -78,7 +79,8 @@ public class PepseGameManager extends GameManager {
         float startX = windowDimensions.x() * 0.5f;
         float groundY = terrain.groundHeightAt(startX);
         Vector2 initialAvatarLocation = new Vector2(startX, groundY - 50);
-        Avatar avatar = new Avatar(initialAvatarLocation, inputListener, imageReader);
+        Avatar avatar = new Avatar(initialAvatarLocation, inputListener,
+                imageReader, terrain::groundHeightAt);
         gameObjects().addGameObject(avatar, Layer.DEFAULT);
 
         // 6. Flora / Trees

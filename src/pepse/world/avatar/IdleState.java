@@ -11,6 +11,7 @@ public class IdleState implements AvatarState {
     public void enter(Avatar avatar) {
         avatar.renderer().setRenderable(avatar.getAvatarAnimation().getIdleAnimation());
         avatar.transform().setVelocityX(IDLE_VELOCITY);
+        avatar.snapToSurface();
     }
 
     @Override
@@ -22,7 +23,7 @@ public class IdleState implements AvatarState {
 
         // Air Case:
         // passively in the air (like falling off a cliff)
-        if(avatar.getVelocity().y() != 0) {
+        if(!avatar.isOnSurface() && avatar.getVelocity().y() > FALL_THRESHOLD) {
             return new JumpState(false);
         }
 
@@ -34,7 +35,7 @@ public class IdleState implements AvatarState {
 
         // case 2: run is initiated
         // ^ - return true iff only one of left or right is true
-        if((left ^ right) && avatar.getEnergy() >= RUN_ENERGY_DEMAND) {
+        if((left ^ right) && avatar.getEnergy() >= MIN_ENERGY_TO_RUN) {
             return new RunState();
         }
 

@@ -30,7 +30,6 @@ public class Terrain {
                 new RectangleRenderable(ColorSupplier.approximateColor(
                         BASE_GROUND_COLOR))
         );
-        block.setTag(PepseGameManager.GROUND_TAG);
         return block;
     }
 
@@ -47,7 +46,15 @@ public class Terrain {
         int minHeight = maxHeight + (TERRAIN_DEPTH * Block.SIZE);
         List<GameObject> column = new ArrayList<>();
         for (int y = maxHeight; y <= minHeight; y += Block.SIZE) {
-            column.add(createBlock(x, y));
+            Block block = createBlock(x, y);
+
+            if (y == maxHeight) {
+                block.setTag(PepseGameManager.GROUND_SURFACE_TAG);
+            } else {
+                block.setTag(PepseGameManager.GROUND_INNER_TAG);
+            }
+
+            column.add(block);
         }
         return column;
     }

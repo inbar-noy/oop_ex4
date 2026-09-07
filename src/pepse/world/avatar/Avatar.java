@@ -8,20 +8,26 @@ import danogl.util.Vector2;
 import pepse.PepseGameManager;
 
 import java.awt.*;
+import java.util.function.Function;
 
 public class Avatar extends GameObject {
     protected static final float VELOCITY_X = 400;
     protected static final float VELOCITY_Y = -650;
 
     private static final float GRAVITY = 600;
-    private static final Vector2 AVATAR_DIMENSIONS = Vector2.ONES.mult(50);
+    private static final Vector2 AVATAR_DIMENSIONS = new Vector2(30, 50);
     private static final int ENERGY_MIN = 0;
     private static final int ENERGY_MAX = 100;
+    private final Function<Float, Float> groundHeightAt;
+    private static final float EPSILON = 10f;
+
 
     private UserInputListener inputListener;
     private final AvatarAnimation avatarAnimation;
     private int energy;
     private AvatarState curState;
+    private GameObject currentSurface = null;
+
 
     // ~~~~~~~~~~~~~~
     //   CONSTRUCTOR
@@ -34,7 +40,8 @@ public class Avatar extends GameObject {
      */
     public Avatar(Vector2 topLeftCorner,
                   UserInputListener inputListener,
-                  ImageReader imageReader) {
+                  ImageReader imageReader,
+                  Function<Float, Float> groundHeightAt) {
         super(topLeftCorner, AVATAR_DIMENSIONS, null);
         physics().preventIntersectionsFromDirection(Vector2.ZERO);
         transform().setAccelerationY(GRAVITY);
@@ -42,6 +49,7 @@ public class Avatar extends GameObject {
         this.inputListener = inputListener;
         this.avatarAnimation = new AvatarAnimation(imageReader);
         this.energy = ENERGY_MAX;
+        this.groundHeightAt = groundHeightAt;
         this.setTag(PepseGameManager.AVATAR_TAG);
 
         // Initialize with the default (idle) state
@@ -65,6 +73,11 @@ public class Avatar extends GameObject {
      * Returns the avatar's animation controller.
      */
     public AvatarAnimation getAvatarAnimation() { return avatarAnimation; }
+    /**
+     * Returns true if the avatar is on the ground/ trunk, false else.
+     */
+    public boolean isOnSurface() { return currentSurface != null; }
+
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~
     //   CLASS FUNCTIONALITIES
@@ -90,10 +103,41 @@ public class Avatar extends GameObject {
     }
 
     private boolean isSurfaceObj(GameObject other) {
-        return other.getTag().equals(PepseGameManager.GROUND_TAG) ||
+        return other.getTag().equals(PepseGameManager.GROUND_SURFACE_TAG) ||
+                // inner brick isn't technically a surface obj. however, there have been
+                // cases where the avatar sank into the ground. so for lack of a better
+                // name idea, this stays isSurfaceObj.
+                other.getTag().equals(PepseGameManager.GROUND_INNER_TAG) ||
                 other.getTag().equals(PepseGameManager.TRUNK_TAG);
     }
 
+    public void snapToSurface() {
+        if (currentSurface == null) return;
+
+        if (currentSurface.getTag().equals(PepseGameManager.GROUND_INNER_TAG)) {
+            if (groundHeightAt != null) {
+                float avatarCenterX = getCenter().x();
+                float surfaceTopY = groundHeightAt.apply(avatarCenterX);
+
+                transform().setTopLeftCornerY(surfaceTopY - getDimensions().y());
+                transform().setVelocityY(0);
+            }
+        }
+
+        else if (currentSurface.getTag().equals(PepseGameManager.GROUND_SURFACE_TAG)) {
+            float blockTopY = currentSurface.getTopLeftCorner().y();
+            float avatarBottomY = getTopLeftCorner().y() + getDimensions().y();
+
+            if (avatarBottomY > blockTopY && avatarBottomY - blockTopY <= EPSILON) {
+                transform().setTopLeftCornerY(blockTopY - getDimensions().y());
+                transform().setVelocityY(0);
+            }
+        }
+    }
+
+    public void clearSurface() {
+        this.currentSurface = null;
+    }
 
     // ~~~~~~~~~~~~~
     //   OVERRIDES
@@ -112,10 +156,31 @@ public class Avatar extends GameObject {
     public void onCollisionEnter(GameObject other, Collision collision) {
         super.onCollisionEnter(other, collision);
 
-        if(getVelocity().y() > 0 && isSurfaceObj(other)) {
-            this.transform().setVelocityY(0);
+        if (isSurfaceObj(other) && collision.getNormal().y() < 0) {
+            currentSurface = other;
+            if (getVelocity().y() > 0) {
+                transform().setVelocityY(0);
+            }
         }
-
+        if (getVelocity().x() != 0) {
+            transform().setVelocityX(0);
+        }
     }
 
+    @Override
+    public void onCollisionStay(GameObject other, Collision collision) {
+        super.onCollisionStay(other, collision);
+
+        if (isSurfaceObj(other) && collision.getNormal().y() < 0) {
+            currentSurface = other;
+        }
+    }
+
+    @Override
+    public void onCollisionExit(GameObject other) {
+        super.onCollisionExit(other);
+        if (other == currentSurface) {
+            currentSurface = null;
+        }
+    }
 }

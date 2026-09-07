@@ -13,6 +13,9 @@ public interface AvatarState {
     int JUMP_ENERGY_DEMAND = 20;
     int DOUBLE_JUMP_ENERGY_DEMAND = 50;
 
+    float FALL_THRESHOLD = 50f;
+    int MIN_ENERGY_TO_RUN = 5;
+
     void enter(Avatar avatar);
     AvatarState tick(Avatar avatar);
     void exit(Avatar avatar);
