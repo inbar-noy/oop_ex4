@@ -18,6 +18,8 @@ import java.util.function.Consumer;
  * Generates an 8 on 8 grid of leaves.
  */
 public class Treetop {
+
+    private static final Color GREEN = new Color(50, 200, 30);
     private static final int MEASURE_UNIT = Block.SIZE;
     private static final int TREETOP_EDGE = 8;
     private static final float LEAF_PROBABILITY = 0.7f;
@@ -27,7 +29,6 @@ public class Treetop {
 
     /**
      * Constructs a treetop canopy.
-     *
      * @param topLeft        top-left coordinate of the canopy area.
      * @param rand           seeded random instance for deterministic generation.
      * @param energyCallback callback invoked when a fruit is eaten.
@@ -49,12 +50,16 @@ public class Treetop {
 
     }
 
+    /**
+     * Returns the treetop which is consisted of leaves and fruits.
+     * @return ArrayList contating the treetop objects.
+     */
     public ArrayList<GameObject> getLeaves() {
         return this.leavesAndFruits;
     }
 
     private GameObject createLeaf(Vector2 position) {
-        Color color = ColorSupplier.approximateColor(PepseGameManager.GREEN);
+        Color color = ColorSupplier.approximateColor(GREEN);
         RectangleRenderable renderable = new RectangleRenderable(color);
         Vector2 dims = Vector2.ONES.mult(MEASURE_UNIT);
         GameObject leaf = new GameObject(position, dims, renderable);

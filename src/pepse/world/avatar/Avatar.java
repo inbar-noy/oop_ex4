@@ -10,17 +10,22 @@ import pepse.PepseGameManager;
 import java.awt.*;
 import java.util.function.Function;
 
+/**
+ * Represents the main playable character (Avatar) in the PEPSE simulation.
+ * The Avatar responds to user inputs for horizontal movement and jumping,
+ * maintains an energy resource that depletes with actions and replenishes
+ */
 public class Avatar extends GameObject {
+
     protected static final float VELOCITY_X = 400;
     protected static final float VELOCITY_Y = -650;
-
     private static final float GRAVITY = 600;
     private static final Vector2 AVATAR_DIMENSIONS = new Vector2(30, 50);
+
     private static final int ENERGY_MIN = 0;
     private static final int ENERGY_MAX = 100;
     private final Function<Float, Float> groundHeightAt;
-    private static final float EPSILON = 10f;
-
+    private static final float EPSILON = 7f;
 
     private UserInputListener inputListener;
     private final AvatarAnimation avatarAnimation;
@@ -28,15 +33,15 @@ public class Avatar extends GameObject {
     private AvatarState curState;
     private GameObject currentSurface = null;
 
-
     // ~~~~~~~~~~~~~~
     //   CONSTRUCTOR
     // ~~~~~~~~~~~~~~
     /**
      * Constructs a new Avatar instance.
-     * @param topLeftCorner the starting top-left position.
-     * @param inputListener listener for keyboard inputs.
-     * @param imageReader   image reader.
+     * @param topLeftCorner  the initial top-left position of the avatar in world coordinates.
+     * @param inputListener  the input listener used to capture user keyboard actions.
+     * @param imageReader    the image reader used to load avatar animation frames.
+     * @param groundHeightAt a function returning the ground surface height (Y) for a given X coordinate.
      */
     public Avatar(Vector2 topLeftCorner,
                   UserInputListener inputListener,
@@ -60,48 +65,59 @@ public class Avatar extends GameObject {
     //   GETTERS
     // ~~~~~~~~~~~
     /**
-     * Returns the player's current energy.
+     * Returns the player's current energy value (between 0 and 100).
+     * @return the avatar's current energy.
      */
     public int getEnergy() { return energy; }
 
     /**
-     * Returns the user input listener.
+     * Returns the user input listener associated with this avatar.
+     * @return the UserInputListener instance.
      */
     public UserInputListener getInputListener() { return inputListener; }
 
     /**
      * Returns the avatar's animation controller.
+     * @return the AvatarAnimation instance.
      */
     public AvatarAnimation getAvatarAnimation() { return avatarAnimation; }
+
     /**
-     * Returns true if the avatar is on the ground/ trunk, false else.
+     * Checks whether the avatar is currently standing on a surface object (ground or trunk).
+     * @return true if the avatar is currently on a surface, false otherwise.
      */
     public boolean isOnSurface() { return currentSurface != null; }
-
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~
     //   CLASS FUNCTIONALITIES
     // ~~~~~~~~~~~~~~~~~~~~~~~~~
     /**
-     * Updates the avatar's energy, clamping between MIN and MAX.
-     * @param num the amount of energy to add (if positive) or subtract (if negative).
+     * Updates the avatar's energy by adding or subtracting the specified amount,
+     * ensuring the result remains clamped between the constants ENERGY_MIN and ENERGY_MAX.
+     * @param num the amount of energy to add (positive) or subtract (negative).
      */
     public void updateEnergy(int num) {
         this.energy = Math.max(ENERGY_MIN, Math.min(ENERGY_MAX, this.energy + num));
     }
 
     /**
-     * Changes the current state of the avatar.
-     * @param newState the new state to transition to.
+     * Transitions the avatar to a new state, invoking exit logic on the old state
+     * and entry logic on the new state.
+     * @param newState the target AvatarState to transition into.
      */
     public void changeState(AvatarState newState) {
-        if(curState != null) {
+        if (curState != null) {
             curState.exit(this);
         }
         curState = newState;
         curState.enter(this);
     }
 
+    /**
+     * Helper method to verify whether a given game object is a surface object (trunk / terrain).
+     * @param other the game object to check.
+     * @return true if the object is ground surface, inner ground, or a tree trunk.
+     */
     private boolean isSurfaceObj(GameObject other) {
         return other.getTag().equals(PepseGameManager.GROUND_SURFACE_TAG) ||
                 // inner brick isn't technically a surface obj. however, there have been
@@ -111,8 +127,12 @@ public class Avatar extends GameObject {
                 other.getTag().equals(PepseGameManager.TRUNK_TAG);
     }
 
+    /**
+     * Corrects the avatar's vertical position by aligning its bottom edge with the top of the
+     * surface it is currently colliding with, snapping it back to the surface.
+     */
     public void snapToSurface() {
-        if (currentSurface == null) return;
+        if (currentSurface == null) { return; }
 
         if (currentSurface.getTag().equals(PepseGameManager.GROUND_INNER_TAG)) {
             if (groundHeightAt != null) {
@@ -122,9 +142,7 @@ public class Avatar extends GameObject {
                 transform().setTopLeftCornerY(surfaceTopY - getDimensions().y());
                 transform().setVelocityY(0);
             }
-        }
-
-        else if (currentSurface.getTag().equals(PepseGameManager.GROUND_SURFACE_TAG)) {
+        } else if (currentSurface.getTag().equals(PepseGameManager.GROUND_SURFACE_TAG)) {
             float blockTopY = currentSurface.getTopLeftCorner().y();
             float avatarBottomY = getTopLeftCorner().y() + getDimensions().y();
 
@@ -135,6 +153,9 @@ public class Avatar extends GameObject {
         }
     }
 
+    /**
+     * Clears the reference to the current surface object.
+     */
     public void clearSurface() {
         this.currentSurface = null;
     }
@@ -142,40 +163,50 @@ public class Avatar extends GameObject {
     // ~~~~~~~~~~~~~
     //   OVERRIDES
     // ~~~~~~~~~~~~~
+    /**
+     * Updates the avatar's state and physics for the current frame.
+     * @param deltaTime the time passed since the last frame in seconds.
+     */
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
 
         AvatarState nextState = curState.tick(this);
-        if(nextState != null && nextState != curState) {
+        if (nextState != null && nextState != curState) {
             changeState(nextState);
         }
     }
 
+    /**
+     * Handles collision initiation between the avatar and another game object.
+     * @param other     the other GameObject involved in the collision.
+     * @param collision details regarding the collision point and normal.
+     */
     @Override
     public void onCollisionEnter(GameObject other, Collision collision) {
         super.onCollisionEnter(other, collision);
+        currentSurface = other;
 
-        if (isSurfaceObj(other) && collision.getNormal().y() < 0) {
-            currentSurface = other;
-            if (getVelocity().y() > 0) {
-                transform().setVelocityY(0);
-            }
-        }
-        if (getVelocity().x() != 0) {
-            transform().setVelocityX(0);
+        if (isSurfaceObj(other) && getVelocity().y() > 0) {
+            transform().setVelocityY(0);
         }
     }
 
+    /**
+     * Handles ongoing collision contact between the avatar and another game object.
+     * @param other     the other GameObject involved in the collision.
+     * @param collision details regarding the collision point and normal.
+     */
     @Override
     public void onCollisionStay(GameObject other, Collision collision) {
         super.onCollisionStay(other, collision);
-
-        if (isSurfaceObj(other) && collision.getNormal().y() < 0) {
-            currentSurface = other;
-        }
+        currentSurface = other;
     }
 
+    /**
+     * Handles the termination of collision contact between the avatar and another game object.
+     * @param other the other GameObject that was previously colliding.
+     */
     @Override
     public void onCollisionExit(GameObject other) {
         super.onCollisionExit(other);

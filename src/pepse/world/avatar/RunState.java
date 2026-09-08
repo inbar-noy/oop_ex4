@@ -31,7 +31,7 @@ public class RunState implements AvatarState {
         }
 
         // stopped running case:
-        if(!(left ^ right) || avatar.getEnergy() < RUN_ENERGY_DEMAND) {
+        if(!(left ^ right) || avatar.getEnergy() < MIN_ENERGY_TO_RUN) {
             return new IdleState();
         }
 

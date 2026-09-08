@@ -6,7 +6,6 @@ import danogl.components.ScheduledTask;
 import danogl.gui.rendering.OvalRenderable;
 import danogl.util.Vector2;
 import pepse.PepseGameManager;
-import pepse.world.avatar.Avatar;
 import pepse.world.wind.ObjectWeight;
 import pepse.world.wind.Wind;
 

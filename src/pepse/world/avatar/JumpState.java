@@ -57,7 +57,7 @@ public class JumpState implements AvatarState {
 
         // LANDING LOGIC
         if(avatar.getVelocity().y() == IDLE_VELOCITY) {
-            if((left ^ right) && avatar.getEnergy() >= RUN_ENERGY_DEMAND) {
+            if((left ^ right) && avatar.getEnergy() >= MIN_ENERGY_TO_RUN) {
                 return new RunState();
             }
             return new IdleState();

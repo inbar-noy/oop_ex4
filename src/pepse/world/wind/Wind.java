@@ -27,7 +27,6 @@ public class Wind {
 
     /**
      * Returns the singleton instance of the Wind manager.
-     *
      * @return the Wind instance.
      */
     public static Wind getInstance() {
@@ -35,7 +34,7 @@ public class Wind {
     }
 
     /**
-     * Updates the global wind strength.
+     * Updates the global wind strength. enables future extension to change the wind mid-run.
      * @param strength the new wind strength to apply across the simulation.
      */
     public void setWindStrength(WindStrength strength) { this.currentWindStrength = strength; }

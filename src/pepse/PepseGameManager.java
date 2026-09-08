@@ -36,8 +36,6 @@ public class PepseGameManager extends GameManager {
     public static final String LEAF_TAG = "leaf";
     public static final String FRUIT_TAG = "fruit";
 
-    public static final Color BROWN = new Color(100, 50, 20);
-    public static final Color GREEN = new Color(50, 200, 30);
 
     /**
      * Default constructor for PepseGameManager.

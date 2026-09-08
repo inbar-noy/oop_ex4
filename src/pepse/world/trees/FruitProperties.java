@@ -8,108 +8,135 @@ import java.awt.Color;
 import java.util.Random;
 
 /**
- * Properties of a Fruit.
- * Constructed via its nested static Builder.
+ * Encapsulates the visual and behavioral properties of a Fruit.
+ * Constructed via its nested static Builder pattern.
  */
 public class FruitProperties {
-    // ordinary fruit properties
+
+    // Base fruit properties
     public static final Color BASE_COLOR = Color.RED;
     public static final int BASE_SIZE = Block.SIZE;
     public static final int BASE_ENERGY = 20;
 
-    // large fruit properties
+    // Large fruit modifications
     private static final float LARGE_SIZE_MULTIPLIER = 1.5f;
     private static final int LARGE_ENERGY_BONUS = 10;
 
-    // golden fruit properties
+    // Golden fruit modifications
     private static final float GOLD_BLEND_RATIO = 0.8f;
     private static final int GOLDEN_ENERGY_BONUS = 2;
 
-    // rotten fruit properties
+    // Rotten fruit modifications
     private static final int ROTTEN_ENERGY_PENALTY = 30;
 
+    // Instance fields of FruitProperties
     private final Color color;
     private final Vector2 dimensions;
     private final int energyGain;
 
-    private FruitProperties(Color color, Vector2 dimensions, int energyGain) {
-        this.color = color;
-        this.dimensions = dimensions;
-        this.energyGain = energyGain;
+    /**
+     * Private constructor accepting the Builder, mirroring the classic Builder pattern.
+     * @param builder the builder containing configured values.
+     */
+    private FruitProperties(Builder builder) {
+        this.color = builder.color;
+        this.dimensions = builder.dimensions;
+        this.energyGain = builder.energyGain;
     }
 
-    public Color getColor() { return color; }
-
-    public Vector2 getDimensions() { return dimensions; }
-
-    public int getEnergyGain() { return energyGain; }
+    /**
+     * Returns the color of the fruit.
+     * @return Color of the fruit.
+     */
+    public Color getColor() {
+        return color;
+    }
 
     /**
-     * Builder class for constructing configured FruitProperties instances.
+     * Returns the dimensions (width, height) of the fruit.
+     * @return Vector2 representing the fruit's dimensions.
+     */
+    public Vector2 getDimensions() {
+        return dimensions;
+    }
+
+    /**
+     * Returns the energy delta applied when this fruit is eaten.
+     * @return integer representing the energy delta.
+     */
+    public int getEnergyGain() {
+        return energyGain;
+    }
+
+    /**
+     * Static Builder class for constructing configured FruitProperties instances.
      */
     public static class Builder {
-        private boolean isLarge = false;
-        private boolean isGolden = false;
-        private boolean isRotten = false;
 
+        private Color color = BASE_COLOR;
+        private Vector2 dimensions = Vector2.ONES.mult(BASE_SIZE);
+        private int energyGain = BASE_ENERGY;
+
+        /**
+         * Applies the large fruit modification.
+         * @param isLarge true to apply the large modification, false to skip.
+         * @return this builder instance for method chaining.
+         */
         public Builder setLarge(boolean isLarge) {
-            this.isLarge = isLarge;
-            return this;
-        }
-
-        public Builder setGolden(boolean isGolden) {
-            this.isGolden = isGolden;
-            return this;
-        }
-
-        public Builder setRotten(boolean isRotten) {
-            this.isRotten = isRotten;
+            if (isLarge) {
+                this.dimensions = this.dimensions.mult(LARGE_SIZE_MULTIPLIER);
+                this.energyGain += LARGE_ENERGY_BONUS;
+            }
             return this;
         }
 
         /**
-         * Helper to randomize attributes:
-         * Large = 1/3
-         * Golden = 1/4
-         * Rotten 1/5
-         * @param rand seeded random instance.
-         * @return this builder.
+         * Applies the golden fruit modification.
+         * @param isGolden true to apply the golden modification, false to skip.
+         * @return this builder instance for method chaining.
+         */
+        public Builder setGolden(boolean isGolden) {
+            if (isGolden) {
+                this.color = ColorSupplier.blendGold(this.color, GOLD_BLEND_RATIO);
+                this.energyGain *= GOLDEN_ENERGY_BONUS;
+            }
+            return this;
+        }
+
+        /**
+         * Applies the rotten fruit modification.
+         * @param isRotten true to apply the rotten modification, false to skip.
+         * @return this builder instance for method chaining.
+         */
+        public Builder setRotten(boolean isRotten) {
+            if (isRotten) {
+                this.color = this.color.darker().darker().darker();
+                this.energyGain -= ROTTEN_ENERGY_PENALTY;
+            }
+            return this;
+        }
+
+        /**
+         * Randomly assigns fruit attributes based on predetermined probabilities:
+         *   Large: 1/3
+         *   Golden: 1/4
+         *   Rotten: 1/5
+         * @param rand seeded Random instance.
+         * @return this builder instance for method chaining.
          */
         public Builder randomizeAttributes(Random rand) {
-            this.isLarge = rand.nextInt(3) == 0;
-            this.isGolden = rand.nextInt(4) == 0;
-            this.isRotten = rand.nextInt(5) == 0;
+            setLarge(rand.nextInt(3) == 0);
+            setGolden(rand.nextInt(4) == 0);
+            setRotten(rand.nextInt(5) == 0);
             return this;
         }
 
         /**
-         * Builds and returns a FruitProperties instance.
+         * Builds and returns the new FruitProperties instance.
+         * @return a new FruitProperties instance configured by this builder.
          */
         public FruitProperties build() {
-            Color calculatedColor = BASE_COLOR;
-            float calculatedSize = BASE_SIZE;
-            int calculatedEnergy = BASE_ENERGY;
-
-            if (isLarge) {
-                calculatedSize *= LARGE_SIZE_MULTIPLIER;
-                calculatedEnergy += LARGE_ENERGY_BONUS;
-            }
-
-            if (isGolden) {
-                calculatedColor = ColorSupplier.blendGold(calculatedColor, GOLD_BLEND_RATIO);
-                calculatedEnergy *= GOLDEN_ENERGY_BONUS;
-            }
-
-            if (isRotten) {
-                calculatedColor = calculatedColor.darker().darker().darker();
-                calculatedEnergy -= ROTTEN_ENERGY_PENALTY;
-            }
-
-            return new FruitProperties(
-                    calculatedColor,
-                    Vector2.ONES.mult(calculatedSize),
-                    calculatedEnergy
-            );
+            return new FruitProperties(this);
         }
     }
 }
