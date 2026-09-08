@@ -17,10 +17,13 @@ import java.util.function.Function;
  */
 public class Avatar extends GameObject {
 
+    /** Height of the Avatar object */
+    public static final float AVATAR_HEIGHT = 50;
+
     protected static final float VELOCITY_X = 400;
     protected static final float VELOCITY_Y = -650;
     private static final float GRAVITY = 600;
-    private static final Vector2 AVATAR_DIMENSIONS = new Vector2(30, 50);
+    private static final Vector2 AVATAR_DIMENSIONS = new Vector2(30, AVATAR_HEIGHT);
 
     private static final int ENERGY_MIN = 0;
     private static final int ENERGY_MAX = 100;
