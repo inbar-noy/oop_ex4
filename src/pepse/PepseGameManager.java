@@ -208,7 +208,7 @@ public class PepseGameManager extends GameManager implements AvatarLocationObser
 
         // Create Energy UI Display
         EnergyUI energyUI = new EnergyUI();
-        avatar.energyObserversubscrive(energyUI);
+        avatar.energyObserversubscribe(energyUI);
         gameObjects().addGameObject(energyUI, Layer.UI);
 
         // Set Camera Tracking with initial offset

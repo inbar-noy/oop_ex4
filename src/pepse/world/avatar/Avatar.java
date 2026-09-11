@@ -192,7 +192,7 @@ public class Avatar extends GameObject {
      * Automatically notifies the new observer of the current energy level.
      * @param observer the EnergyObserver to register.
      */
-    public void energyObserversubscrive(EnergyObserver observer) {
+    public void energyObserversubscribe(EnergyObserver observer) {
         energyObservers.add(observer);
         observer.uponEnergyChanged(this.energy);
     }
