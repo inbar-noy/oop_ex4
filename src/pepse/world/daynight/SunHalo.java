@@ -7,7 +7,15 @@ import danogl.util.Vector2;
 
 import java.awt.*;
 
+/**
+ * Static class for creating a Pepse Sun Halo
+ */
 public class SunHalo {
+    /**
+     * Create a Sun Halo
+     * @param sun Sun Object to follow
+     * @return Sun Halo GameObject
+     */
     public static GameObject create(GameObject sun) {
         GameObject sunHalo = new GameObject(
                 new Vector2(300, 300),

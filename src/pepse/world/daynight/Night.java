@@ -8,9 +8,19 @@ import danogl.util.Vector2;
 
 import java.awt.*;
 
+/**
+ * Handles the transition between day and night
+ */
 public class Night {
     private static final float MIDNIGHT_OPACITY = 0.5f;
 
+    /**
+     * Creates a screen sized dark overlay that fades in and out.
+     *
+     * @param windowDimensions The dimensions of the game window.
+     * @param cycleLength The time it takes from full day to full night.
+     * @return A GameObject representing the night overlay.
+     */
     public static GameObject create(Vector2 windowDimensions, float cycleLength) {
         GameObject night = new GameObject(
                 new Vector2(0, 0),

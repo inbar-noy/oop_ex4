@@ -6,9 +6,11 @@ import danogl.collisions.Layer;
 import danogl.gui.*;
 import danogl.gui.rendering.Camera;
 import danogl.util.Vector2;
+import pepse.world.Block;
 import pepse.world.Sky;
 import pepse.world.Terrain;
 import pepse.world.avatar.Avatar;
+import pepse.world.avatar.AvatarLocationObserver;
 import pepse.world.avatar.EnergyUI;
 import pepse.world.daynight.Night;
 import pepse.world.daynight.Sun;
@@ -20,7 +22,7 @@ import java.util.List;
  * Main game manager that coordinates and initializes all simulation subsystems in the
  * PEPSE simulation. This class extends GameManager.
  */
-public class PepseGameManager extends GameManager {
+public class PepseGameManager extends GameManager implements AvatarLocationObserver {
 
     // ~~~~~~~~~~~~~~~~~~
     //  PUBLIC CONSTANTS
@@ -58,21 +60,19 @@ public class PepseGameManager extends GameManager {
     private static final float WINDOW_WIDTH = 1200f;
     private static final float WINDOW_HEIGHT = 690f;
     private static final int SEED = 0;
-    private static final int TERRAIN_RANGE_RIGHT = 2000;
-    private static final int TERRAIN_RANGE_LEFT = -1000;
+    private static final int TERRAIN_MARGIN = 1800;
     private static final int HALO_LAYER = Layer.BACKGROUND + 5;
     private static final int SUN_LAYER = Layer.BACKGROUND + 10;
 
     // ~~~~~~~~~~~~~~~~~~~~~~~
     //  PRIVATE GAME OBJECTS
     // ~~~~~~~~~~~~~~~~~~~~~~~
-    private static GameObject sky;
-    private static GameObject sun;
-    private static GameObject sunHalo;
-    private static GameObject night;
-    private static Terrain terrain;
-    private static Avatar avatar;
-    private static Flora flora;
+    private Terrain terrain;
+    private Avatar avatar;
+    private Flora flora;
+
+    private int leftmostCol;
+    private int rightmostCol;
 
     /**
      * Constructs a new PepseGameManager instance with default window dimensions.
@@ -90,7 +90,6 @@ public class PepseGameManager extends GameManager {
      *   DEFAULT: Avatar.
      *   FOREGROUND: Night darkness overlay.
      *   UI: Energy user interface indicator.
-     *
      * Also configures camera tracking to follow the avatar.
      *
      * @param imageReader      utility to read image assets from disk.
@@ -108,8 +107,56 @@ public class PepseGameManager extends GameManager {
 
         createSky(windowDimensions);
         createTerrain(windowDimensions);
+        leftmostCol = -TERRAIN_MARGIN;
+        rightmostCol = TERRAIN_MARGIN;
         createAvatar(windowDimensions, inputListener, imageReader);
+        avatar.locationSubscribe(this);
         createFlora();
+    }
+
+    /**
+     * Handle updates about the avatar's location
+     * @param x X coordinate of the avatar
+     */
+    @Override
+    public void updateAvatarLocation(float x) {
+        int CHUNK_SIZE = Block.SIZE * 4;
+
+        if (x + TERRAIN_MARGIN > rightmostCol) {
+
+            List<GameObject> toAddBlocks = terrain.createInRange(rightmostCol, rightmostCol + CHUNK_SIZE - 1);
+            List<GameObject> toAddTrees = flora.createInRange(rightmostCol, rightmostCol + CHUNK_SIZE - 1);
+
+            for (GameObject obj : toAddBlocks) gameObjects().addGameObject(obj, Layer.STATIC_OBJECTS);
+            for (GameObject obj : toAddTrees) gameObjects().addGameObject(obj, Layer.STATIC_OBJECTS);
+
+            List<GameObject> toRemoveBlocks = terrain.removeInRange(leftmostCol, leftmostCol + CHUNK_SIZE - 1);
+            List<GameObject> toRemoveTrees = flora.removeInRange(leftmostCol, leftmostCol + CHUNK_SIZE - 1);
+
+            for (GameObject obj : toRemoveBlocks) gameObjects().removeGameObject(obj, Layer.STATIC_OBJECTS);
+            for (GameObject obj : toRemoveTrees) gameObjects().removeGameObject(obj, Layer.STATIC_OBJECTS);
+
+            rightmostCol += CHUNK_SIZE;
+            leftmostCol += CHUNK_SIZE;
+        }
+
+        else if (x - TERRAIN_MARGIN < leftmostCol) {
+
+            List<GameObject> toAddBlocks = terrain.createInRange(leftmostCol - CHUNK_SIZE, leftmostCol - 1);
+            List<GameObject> toAddTrees = flora.createInRange(leftmostCol - CHUNK_SIZE, leftmostCol - 1);
+
+            for (GameObject obj : toAddBlocks) gameObjects().addGameObject(obj, Layer.STATIC_OBJECTS);
+            for (GameObject obj : toAddTrees) gameObjects().addGameObject(obj, Layer.STATIC_OBJECTS);
+
+            List<GameObject> toRemoveBlocks = terrain.removeInRange(rightmostCol - CHUNK_SIZE, rightmostCol - 1);
+            List<GameObject> toRemoveTrees = flora.removeInRange(rightmostCol - CHUNK_SIZE, rightmostCol - 1);
+
+            for (GameObject obj : toRemoveBlocks) gameObjects().removeGameObject(obj, Layer.STATIC_OBJECTS);
+            for (GameObject obj : toRemoveTrees) gameObjects().removeGameObject(obj, Layer.STATIC_OBJECTS);
+
+            leftmostCol -= CHUNK_SIZE;
+            rightmostCol -= CHUNK_SIZE;
+        }
     }
 
     /**
@@ -125,24 +172,24 @@ public class PepseGameManager extends GameManager {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~
     private void createSky(Vector2 windowDimensions) {
         // Create Sky
-        this.sky = Sky.create(windowDimensions);
+        GameObject sky = Sky.create(windowDimensions);
         gameObjects().addGameObject(sky, Layer.BACKGROUND);
 
-        // Create Sun & SunHalo
-        this.sun = Sun.create(windowDimensions, DAY_CYCLE);
-        this.sunHalo = SunHalo.create(sun);
+        // Create Sun and SunHalo
+        GameObject sun = Sun.create(windowDimensions, DAY_CYCLE);
+        GameObject sunHalo = SunHalo.create(sun);
         gameObjects().addGameObject(sunHalo, HALO_LAYER);
         gameObjects().addGameObject(sun, SUN_LAYER);
 
         // Create Night Overlay
-        this.night = Night.create(windowDimensions, DAY_CYCLE);
+        GameObject night = Night.create(windowDimensions, DAY_CYCLE);
         gameObjects().addGameObject(night, Layer.FOREGROUND);
 
     }
 
     private void createTerrain(Vector2 windowDimensions) {
         this.terrain = new Terrain(windowDimensions, SEED);
-        List<GameObject> blocks = terrain.createInRange(TERRAIN_RANGE_LEFT, TERRAIN_RANGE_RIGHT);
+        List<GameObject> blocks = terrain.createInRange(-TERRAIN_MARGIN, TERRAIN_MARGIN);
         for (GameObject obj : blocks) {
             gameObjects().addGameObject(obj, Layer.STATIC_OBJECTS);
         }
@@ -175,7 +222,7 @@ public class PepseGameManager extends GameManager {
 
     private void createFlora() {
         this.flora = new Flora(terrain::groundHeightAt, avatar::updateEnergy);
-        List<GameObject> treeParts = flora.createInRange(TERRAIN_RANGE_LEFT, TERRAIN_RANGE_RIGHT);
+        List<GameObject> treeParts = flora.createInRange(-TERRAIN_MARGIN, TERRAIN_MARGIN);
 
         for (GameObject part : treeParts) {
             gameObjects().addGameObject(part, Layer.STATIC_OBJECTS);
