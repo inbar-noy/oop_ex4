@@ -8,6 +8,8 @@ import danogl.util.Vector2;
 import pepse.PepseGameManager;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -30,11 +32,12 @@ public class Avatar extends GameObject {
     private final Function<Float, Float> groundHeightAt;
     private static final float EPSILON = 7f;
 
-    private UserInputListener inputListener;
+    private final UserInputListener inputListener;
     private final AvatarAnimation avatarAnimation;
     private int energy;
     private AvatarState curState;
     private GameObject currentSurface = null;
+    private final List<AvatarLocationObserver> locationObservers = new ArrayList<>();
 
     // ~~~~~~~~~~~~~~
     //   CONSTRUCTOR
@@ -163,6 +166,14 @@ public class Avatar extends GameObject {
         this.currentSurface = null;
     }
 
+    /**
+     * Add a location observer
+     * @param observer Location observer
+     */
+    public void locationSubscribe(AvatarLocationObserver observer) {
+        locationObservers.add(observer);
+    }
+
     // ~~~~~~~~~~~~~
     //   OVERRIDES
     // ~~~~~~~~~~~~~
@@ -175,6 +186,9 @@ public class Avatar extends GameObject {
         super.update(deltaTime);
 
         AvatarState nextState = curState.tick(this);
+        for (AvatarLocationObserver observer : locationObservers) {
+            observer.updateAvatarLocation(this.getCenter().x());
+        }
         if (nextState != null && nextState != curState) {
             changeState(nextState);
         }

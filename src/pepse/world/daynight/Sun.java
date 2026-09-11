@@ -8,10 +8,19 @@ import danogl.util.Vector2;
 
 import java.awt.*;
 
+/**
+ * Static class for creating a Pepse Sun
+ */
 public class Sun {
     private static final float initialSunCenterX = 200f;
     private static final float initialSunCenterY = 200f;
 
+    /**
+     * Create a Sun
+     * @param windowDimensions Dimensions of the window.
+     * @param cycleLength Time in seconds for a single cycle around the earth.
+     * @return Sun GameObject.
+     */
     public static GameObject create(Vector2 windowDimensions, float cycleLength) {
         GameObject sun = new GameObject(
                 new Vector2(300, 300),

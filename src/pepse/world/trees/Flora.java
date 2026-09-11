@@ -4,9 +4,7 @@ import danogl.GameObject;
 import danogl.util.Vector2;
 import pepse.world.Block;
 
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -24,6 +22,7 @@ public class Flora {
 
     private final Function<Float, Float> groundHeightAt;
     private final Consumer<Integer> energyCallback;
+    private final Map<Integer, StaticTree> trees = new HashMap<>();
 
     /**
      * Constructs a new Flora instance.
@@ -66,8 +65,30 @@ public class Flora {
                         topLeftTrunk, trunkHeightInBlocks, rand, energyCallback
                 );
                 woodland.addAll(tree.getTree());
+                trees.put(x, tree);
             }
         }
         return woodland;
+    }
+
+    /**
+     * Remove flora within a range. Returned objects need to be removed from the engine's list.
+     * @param minX Left boundary of the range
+     * @param maxX Right boundary of the range
+     * @return A list of all game objects to remove from the engine
+     */
+    public List<GameObject> removeInRange(int minX, int maxX) {
+        ArrayList<GameObject> items = new ArrayList<>();
+
+        int minimalX = (minX / MEASURE_UNIT) * MEASURE_UNIT;
+        int maximalX = (maxX / MEASURE_UNIT) * MEASURE_UNIT;
+
+        for(int x = minimalX; x < maximalX; x+= MEASURE_UNIT) {
+            if (trees.containsKey(x)) {
+                items.addAll(trees.get(x).getTree());
+                trees.remove(x);
+            }
+        }
+        return items;
     }
 }

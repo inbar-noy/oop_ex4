@@ -1,71 +1,87 @@
 package pepse.world;
 
 import danogl.GameObject;
-import danogl.gui.rendering.RectangleRenderable;
 import danogl.util.Vector2;
-import pepse.PepseGameManager;
-import pepse.utils.ColorSupplier;
 import pepse.utils.NoiseGenerator;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * Represents the ground
+ */
 public class Terrain {
-    private static final Color BASE_GROUND_COLOR = new Color(212,
-            123, 74);
+    private static final Color BASE_GROUND_COLOR = new Color(212, 123, 74);
     private static final float NOISE_FACTOR = Block.SIZE * 7;
     private final float groundHeightAtX0;
     private final NoiseGenerator noiseGenerator;
     private static final int TERRAIN_DEPTH = 30;
+    private final Map<Integer, Column> columns = new HashMap<Integer, Column>();
 
+    /**
+     * Create the terrain
+     * @param windowDimensions Dimensions of the window
+     * @param seed Seed to use for the PRNG
+     */
     public Terrain(Vector2 windowDimensions, int seed) {
         groundHeightAtX0 = windowDimensions.y() * (2f / 3f);
         noiseGenerator = new NoiseGenerator(seed, (int)groundHeightAtX0);
     }
 
-    public Block createBlock(int x, int y) {
-        Block block = new Block(
-                new Vector2(x, y),
-                new RectangleRenderable(ColorSupplier.approximateColor(
-                        BASE_GROUND_COLOR))
-        );
-        return block;
-    }
-
+    /**
+     * Return the ground height a coordinate
+     * @param x X coordinate
+     * @return Height at x
+     */
     public float groundHeightAt(float x) {
         float noise = (float) noiseGenerator.noise(x, NOISE_FACTOR);
         float height = groundHeightAtX0 + noise;
         int div = Math.floorDiv((int) height, Block.SIZE);
-        float finalHeight = div * Block.SIZE;
-        return finalHeight;
+        return div * Block.SIZE;
     }
 
-    public List<GameObject> createColumn(int x) {
-        int maxHeight = (int) groundHeightAt(x);
-        int minHeight = maxHeight + (TERRAIN_DEPTH * Block.SIZE);
-        List<GameObject> column = new ArrayList<>();
-        for (int y = maxHeight; y <= minHeight; y += Block.SIZE) {
-            Block block = createBlock(x, y);
-
-            if (y == maxHeight) {
-                block.setTag(PepseGameManager.GROUND_SURFACE_TAG);
-            } else {
-                block.setTag(PepseGameManager.GROUND_INNER_TAG);
-            }
-
-            column.add(block);
-        }
-        return column;
-    }
-
+    /**
+     * Create ground in a range
+     * @param minX Left boundary
+     * @param maxX Right boundary
+     * @return GameObjects to add to the engine
+     */
     public List<GameObject> createInRange(int minX, int maxX) {
-        List<GameObject> blocks = new ArrayList<>();
+
         int currentX = (minX / Block.SIZE) * Block.SIZE;
+        List<GameObject> blocks = new ArrayList<>();
+
         while (currentX <= maxX) {
-            var column = createColumn(currentX);
+            int maxHeight = (int) groundHeightAt(currentX);
+            int minHeight = maxHeight + (TERRAIN_DEPTH * Block.SIZE);
+            var column = new Column(currentX, minHeight, maxHeight, BASE_GROUND_COLOR);
+            columns.put(currentX, column);
             currentX += Block.SIZE;
-            blocks.addAll(column);
+            blocks.addAll(column.getBlocks());
+        }
+        return blocks;
+    }
+
+    /**
+     * Remove ground in a range
+     * @param minX Left boundary
+     * @param maxX Right boundary
+     * @return GameObjects to remove from the engine
+     */
+    public List<GameObject> removeInRange(int minX, int maxX) {
+
+        int currentX = (minX / Block.SIZE) * Block.SIZE;
+        List<GameObject> blocks = new ArrayList<>();
+
+        while (currentX <= maxX) {
+            currentX += Block.SIZE;
+            if (columns.containsKey(currentX)) {
+                blocks.addAll(columns.get(currentX).getBlocks());
+                columns.remove(currentX);
+            }
         }
         return blocks;
     }
