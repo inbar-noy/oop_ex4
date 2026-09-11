@@ -2,29 +2,52 @@ package pepse.world.trees;
 
 import danogl.GameObject;
 import danogl.util.Vector2;
+import pepse.world.Block;
 
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * Responsible for procedurally generating vegetation trees in the game world.
+ * This class creates trees across a specified horizontal range based on deterministic
+ * random seeds tied to X coordinates. It utilizes functional callbacks to query terrain height.
+ */
 public class Flora {
-    private static final int MEASURE_UNIT = 30;
+    private static final int MEASURE_UNIT = Block.SIZE;
     private static final float TREE_PROBABILITY = 0.1f;
     private static final int MIN_TRUNK_HEIGHT = 4;
     private static final int MAX_TRUNK_HEIGHT_ADDITION = 6;
     private static final int SEED = 21;
-    private final Function<Float, Float> groundHeightAt;
 
-    public Flora(Function<Float, Float> groundHeightAt) {
+    private final Function<Float, Float> groundHeightAt;
+    private final Consumer<Integer> energyCallback;
+
+    /**
+     * Constructs a new Flora instance.
+     * @param groundHeightAt a function mapping an X coordinate to the corresponding terrain ground
+     *                      height (Y).
+     * @param energyCallback a callback invoked with an integer amount to modify the avatar's
+     *                       energy when a fruit is eaten.
+     */
+    public Flora(Function<Float, Float> groundHeightAt, Consumer<Integer> energyCallback) {
         this.groundHeightAt = groundHeightAt;
+        this.energyCallback = energyCallback;
     }
 
+    /**
+     * Generates all tree objects within the specified horizontal range.
+     * @param minX the starting X coordinate of the generation range.
+     * @param maxX the ending X coordinate of the generation range.
+     * @return an ArrayList containing all the generated GameObject instances within the range.
+     */
     public ArrayList<GameObject> createInRange(int minX, int maxX) {
         ArrayList<GameObject> woodland = new ArrayList<>();
 
-        int minimalX = (int) ((minX / MEASURE_UNIT) * MEASURE_UNIT);
-        int maximalX = (int) ((maxX / MEASURE_UNIT) * MEASURE_UNIT);
+        int minimalX = (minX / MEASURE_UNIT) * MEASURE_UNIT;
+        int maximalX = (maxX / MEASURE_UNIT) * MEASURE_UNIT;
 
         for(int x = minimalX; x < maximalX; x+= MEASURE_UNIT) {
             Random rand = new Random(Objects.hash(x, SEED));
@@ -39,7 +62,9 @@ public class Flora {
                 float topLeftTrunkY = terrainY - (trunkHeightInBlocks * MEASURE_UNIT);
                 Vector2 topLeftTrunk = new Vector2(x, topLeftTrunkY);
 
-                StaticTree tree = new StaticTree(topLeftTrunk, trunkHeightInBlocks, rand);
+                StaticTree tree = new StaticTree(
+                        topLeftTrunk, trunkHeightInBlocks, rand, energyCallback
+                );
                 woodland.addAll(tree.getTree());
             }
         }

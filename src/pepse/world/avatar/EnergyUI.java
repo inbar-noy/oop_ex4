@@ -44,6 +44,11 @@ public class EnergyUI extends GameObject {
         setCoordinateSpace(CoordinateSpace.CAMERA_COORDINATES);
     }
 
+    /**
+     * Updates the UI display on each frame, querying the energy supplier at
+     * intervals and updating the displayed text whenever the value changes.
+     * @param deltaTime the time passed since the last frame in seconds.
+     */
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);

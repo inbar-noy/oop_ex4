@@ -4,6 +4,7 @@ import danogl.GameObject;
 import danogl.components.CoordinateSpace;
 import danogl.gui.rendering.RectangleRenderable;
 import danogl.util.Vector2;
+import pepse.PepseGameManager;
 
 import java.awt.*;
 
@@ -15,6 +16,7 @@ public class Sky {
                 Vector2.ZERO, windowDimensions,
                 new RectangleRenderable(BASIC_SKY_COLOR));
         sky.setCoordinateSpace(CoordinateSpace.CAMERA_COORDINATES);
+        sky.setTag(PepseGameManager.SKY_TAG);
         return sky;
     }
 }
